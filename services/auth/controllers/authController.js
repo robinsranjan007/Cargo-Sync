@@ -4,7 +4,7 @@ import bcrypt from "bcryptjs";
 
 export const generateAccessToken = (user) => {
   return jwt.sign(
-    { id: user.id, name: user.name, role: user.role },
+    { id: user.id, name: user.name, role: user.role ,tenantId:user.tenantId},
     process.env.JWT_SECRET,
     { expiresIn: "15m" },
   );
@@ -125,7 +125,7 @@ export const loginUser = async (req, res) => {
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
-    return res.status(201).json({
+    return res.status(200).json({
       accessToken,
       success: true,
       user: {
@@ -194,7 +194,7 @@ export const refreshToken = async (req, res) => {
 
     user.refreshTokens = user.refreshTokens.filter(rt => rt.token !== token);
 
-    const newAccessToken = generateAccessToken(user._id, user.role, user.tenantId);
+    const newAccessToken = generateAccessToken(user);
     const newRefreshToken = generateRefreshToken(user._id);
 
     user.refreshTokens.push({ token: newRefreshToken });

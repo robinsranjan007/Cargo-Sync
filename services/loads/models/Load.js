@@ -46,7 +46,7 @@ const loadSchema = new mongoose.Schema({
   },
   tenantId: {
     type: mongoose.Schema.Types.ObjectId,
-    required: true
+    required: false
   },
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,
