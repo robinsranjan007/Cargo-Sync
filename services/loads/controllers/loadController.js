@@ -1,4 +1,5 @@
 import Load from '../models/Load.js';
+import { producer } from '../config/kafka.js';
 
 // Generate load number like CS-4821
 const generateLoadNumber = async () => {
@@ -34,6 +35,32 @@ export const createLoad = async (req, res) => {
         note: 'Load created'
       }]
     });
+
+
+try {
+ 
+  await producer.send({
+    topic: 'load.created',
+    messages: [
+      {
+        value: JSON.stringify({
+          loadId: load._id,
+          loadNumber: load.loadNumber,
+          email: load.shipper.email,
+          shipper: load.shipper,
+          carrier: load.carrier,
+          pickup: load.pickup,
+          delivery: load.delivery,
+          rate: load.rate
+        })
+      }
+    ]
+  });
+  console.log(`Kafka event published: load.created for ${load.loadNumber}`);
+} catch (kafkaError) {
+  console.error('Kafka publish error:', kafkaError.message);
+}
+
 
     res.status(201).json({
       success: true,
