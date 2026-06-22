@@ -4,11 +4,13 @@ import s3 from '../config/s3.js';
 import { producer } from '../config/kafka.js';
 
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
+  apiKey: process.env.GEMINI_API_KEY,
+  baseURL: process.env.GEMINI_BASE_URL
 });
 
 const storage = multer.memoryStorage();
 export const upload = multer({ storage });
+
 export const uploadDocument = async (req, res) => {
   try {
     const { loadId, documentType } = req.body;
@@ -20,7 +22,6 @@ export const uploadDocument = async (req, res) => {
       });
     }
 
-    // Upload to S3
     const key = `${req.user.tenantId || 'default'}/${loadId}/${documentType}_${Date.now()}_${req.file.originalname}`;
     
     const uploadParams = {
@@ -33,37 +34,31 @@ export const uploadDocument = async (req, res) => {
     const s3Result = await s3.upload(uploadParams).promise();
     console.log(`File uploaded to S3: ${s3Result.Location}`);
 
-    // Convert to base64 for OpenAI
     const base64Image = req.file.buffer.toString('base64');
     const mimeType = req.file.mimetype;
 
-    // Send to OpenAI for extraction
-    console.log('Sending to OpenAI for extraction...');
+    console.log('Sending to Gemini for extraction...');
     
     const response = await openai.chat.completions.create({
-      model: 'gpt-4o',
+      model: process.env.GEMINI_MODEL,
       messages: [
         {
           role: 'user',
           content: [
             {
               type: 'text',
-              text: `You are a freight document parser. Extract the following fields from this Bill of Lading or shipping document and return ONLY a JSON object with these exact keys:
+              text: `You are a freight document parser. Extract fields from this document and return ONLY a JSON object:
               {
                 "shipperName": "",
-                "shipperAddress": "",
                 "consigneeName": "",
-                "consigneeAddress": "",
                 "pickupCity": "",
                 "deliveryCity": "",
                 "commodity": "",
                 "weight": "",
-                "weightUnit": "",
                 "proNumber": "",
-                "poNumber": "",
-                "signaturePresent": true/false
+                "signaturePresent": true
               }
-              If a field is not found, use null. Return ONLY the JSON, no other text.`
+              If not found use null. Return ONLY JSON.`
             },
             {
               type: 'image_url',
@@ -74,7 +69,7 @@ export const uploadDocument = async (req, res) => {
           ]
         }
       ],
-      max_tokens: 1000
+      max_tokens: 500
     });
 
     const extractedText = response.choices[0].message.content;
@@ -91,7 +86,6 @@ export const uploadDocument = async (req, res) => {
 
     console.log('AI extraction complete:', extractedData);
 
-    // Publish Kafka event
     await producer.send({
       topic: 'document.processed',
       messages: [
