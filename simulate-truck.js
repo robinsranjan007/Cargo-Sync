@@ -1,7 +1,7 @@
 import fetch from 'node-fetch';
 
-const LOAD_ID = '6a31ad0db7ab516c434bca5e';
-const TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjZhMzFhZDBkYjdhYjUxNmM0MzRiY2E1ZSIsIm5hbWUiOiJUZXN0IFVzZXIiLCJyb2xlIjoiZGlzcGF0Y2hlciIsImlhdCI6MTc4MTY0MDQ2MiwiZXhwIjoxNzgxNjQxMzYyfQ.FcxBdD3nUs_w4GJUb70tGcFp81zA6z-levpXICtgGFU';
+const LOAD_ID = '6a456d9c5fe7ccd38b4731f1';
+const TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjZhNDU2YTQxZmE3NTc3ODQwNDJmNjBmOCIsIm5hbWUiOiJSb2JpbnMgUmFuamFuIiwicm9sZSI6ImRpc3BhdGNoZXIiLCJ0ZW5hbnRJZCI6IjZhNDU2YTQxZmE3NTc3ODQwNDJmNjBmNyIsImlhdCI6MTc4MjkzODIxNiwiZXhwIjoxNzgyOTM5MTE2fQ.L7He99LqgByZjujeUMWkqi85QRYV8Il1Z6HxMwjHFG4';
 
 // Route from Toronto to Vancouver — coordinates along the way
 const route = [
