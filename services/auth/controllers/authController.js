@@ -1,6 +1,7 @@
 import User from "../models/User.js";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
+import Tenant from '../models/Tenant.js';
 
 export const generateAccessToken = (user) => {
   return jwt.sign(
@@ -18,46 +19,56 @@ export const generateRefreshToken = (userId) => {
 
 export const register = async (req, res) => {
   try {
-    const { name, email, password, role } = req.body;
+    const { name, email, password, role, companyName } = req.body;
 
-    if (!name || !email || !password || !role) {
-      return res.status(500).json({
+    if (!name || !email || !password || !role || !companyName) {
+      return res.status(400).json({
         success: false,
-        message: "All fields are required",
+        message: "All fields are required including company name",
       });
     }
 
-    //check if the user already exist
-    const exisitinguser = await User.findOne({ email });
-
-    if (exisitinguser) {
-      return res.status(400).json({ message: "USER ALREADY EXIST" });
+    // Check if user already exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ 
+        success: false,
+        message: "User already exists" 
+      });
     }
 
-    //hashpassword
+    // Create tenant (company) first
+    const slug = companyName.toLowerCase()
+      .replace(/[^a-z0-9]/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '') + '-' + Date.now();
 
+    const tenant = await Tenant.create({
+      name: companyName,
+      slug,
+      email
+    });
+
+    // Hash password
     const salt = await bcrypt.genSalt(10);
-
     const hashpassword = await bcrypt.hash(password, salt);
 
-    //create user
+    // Create user with tenantId
     const user = await User.create({
       name,
       email,
       password: hashpassword,
       role: role || "dispatcher",
+      tenantId: tenant._id
     });
 
-    //set tokens
-
+    // Generate tokens
     const accessToken = generateAccessToken(user);
     const refreshToken = generateRefreshToken(user._id);
 
     user.refreshTokens.push({ token: refreshToken });
-
     await user.save();
 
-    //Set refresh token in httpOnly cookie
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
@@ -73,13 +84,15 @@ export const register = async (req, res) => {
         name: user.name,
         email: user.email,
         role: user.role,
+        tenantId: tenant._id,
+        companyName: tenant.name
       },
     });
+
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
-
 export const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;

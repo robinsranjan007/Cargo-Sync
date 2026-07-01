@@ -33,35 +33,33 @@ const useAuthStore = create((set) => ({
     }
   },
 
-  register: async (name, email, password, role) => {
-    set({ isLoading: true, error: null });
-    try {
-      const response = await authAPI.post('/register', {
-        name,
-        email,
-        password,
-        role
-      });
-      const { accessToken, user } = response.data;
-
-      localStorage.setItem('accessToken', accessToken);
-
-      set({
-        user,
-        accessToken,
-        isAuthenticated: true,
-        isLoading: false
-      });
-
-      return { success: true };
-    } catch (error) {
-      set({
-        error: error.response?.data?.message || 'Registration failed',
-        isLoading: false
-      });
-      return { success: false };
-    }
-  },
+ register: async (name, email, password, role, companyName) => {
+  set({ isLoading: true, error: null });
+  try {
+    const response = await authAPI.post('/register', {
+      name,
+      email,
+      password,
+      role,
+      companyName
+    });
+    const { accessToken, user } = response.data;
+    localStorage.setItem('accessToken', accessToken);
+    set({
+      user,
+      accessToken,
+      isAuthenticated: true,
+      isLoading: false
+    });
+    return { success: true };
+  } catch (error) {
+    set({
+      error: error.response?.data?.message || 'Registration failed',
+      isLoading: false
+    });
+    return { success: false };
+  }
+},
 
   logout: async () => {
     try {
