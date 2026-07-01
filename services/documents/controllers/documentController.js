@@ -34,57 +34,21 @@ export const uploadDocument = async (req, res) => {
     const s3Result = await s3.upload(uploadParams).promise();
     console.log(`File uploaded to S3: ${s3Result.Location}`);
 
-    const base64Image = req.file.buffer.toString('base64');
-    const mimeType = req.file.mimetype;
-
     console.log('Sending to Gemini for extraction...');
-    
-    const response = await openai.chat.completions.create({
-      model: process.env.GEMINI_MODEL,
-      messages: [
-        {
-          role: 'user',
-          content: [
-            {
-              type: 'text',
-              text: `You are a freight document parser. Extract fields from this document and return ONLY a JSON object:
-              {
-                "shipperName": "",
-                "consigneeName": "",
-                "pickupCity": "",
-                "deliveryCity": "",
-                "commodity": "",
-                "weight": "",
-                "proNumber": "",
-                "signaturePresent": true
-              }
-              If not found use null. Return ONLY JSON.`
-            },
-            {
-              type: 'image_url',
-              image_url: {
-                url: `data:${mimeType};base64,${base64Image}`
-              }
-            }
-          ]
-        }
-      ],
-      max_tokens: 500
-    });
 
-    const extractedText = response.choices[0].message.content;
-    let extractedData = {};
-    
-    try {
-      extractedData = JSON.parse(extractedText);
-    } catch (e) {
-      const jsonMatch = extractedText.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        extractedData = JSON.parse(jsonMatch[0]);
-      }
-    }
+    // Mock extraction — replace with real AI when OpenAI credits available
+    const extractedData = {
+      shipperName: "Ontario Auto Parts Ltd",
+      consigneeName: "Pacific Distribution Inc",
+      pickupCity: "Toronto",
+      deliveryCity: "Vancouver",
+      commodity: "Automotive parts",
+      weight: "50000 lbs",
+      proNumber: "PRO-2024-88234",
+      signaturePresent: true
+    };
 
-    console.log('AI extraction complete:', extractedData);
+    console.log('AI extraction complete (mock):', extractedData);
 
     await producer.send({
       topic: 'document.processed',
